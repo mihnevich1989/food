@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		changeToUAH() {
 			this.price = this.price * this.transfer;
 		}
-		renred() {
+		render() {
 			const element = document.createElement('div');
 			//Проверка на то что  ...classes не пустой, если пустой то передать параметры по умолчанию 'menu_iten'
 			if (this.classes.length === 0) {
@@ -174,55 +174,54 @@ document.addEventListener('DOMContentLoaded', () => {
 				this.classes.forEach(className => element.classList.add(className));
 			}
 			element.innerHTML = `
-										<img src=${this.src} alt=${this.alt}>
-										<h3 class="menu__item-subtitle">${this.title}</h3>
-										<div class="menu__item-descr">${this.descr}</div>
-										<div class="menu__item-divider"></div>
-										<div class="menu__item-price">
-												<div class="menu__item-cost">Цена:</div>
-												<div class="menu__item-total"><span>${this.price}</span> грн/день</div>
-										</div>
-						`;
+				<img src=${this.src} alt=${this.alt}>
+				<h3 class="menu__item-subtitle">${this.title}</h3>
+				<div class="menu__item-descr">${this.descr}</div>
+				<div class="menu__item-divider"></div>
+				<div class="menu__item-price">
+						<div class="menu__item-cost">Цена:</div>
+						<div class="menu__item-total"><span>${this.price}</span> грн/день</div>
+				</div>
+				`;
 			this.parent.append(element);
 		}
 	}
 
-	new MenuCard(
-		'img/tabs/vegy.jpg',
-		'vegy',
-		'Меню "vegy"',
-		`Меню "vegy" - это новый подход к приготовлению блюд: больше свежих
-				овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной
-				ценой и высоким качеством!`,
-		9,
-		'.menu .container',
-		'menu__item',
-		'big'
-	).renred();
+	getResource('http://localhost:3000/menu')
+		.then(data => {
+			data.forEach(({ img, altimg, title, descr, price }) => {
+				new MenuCard(img, altimg, title, descr, price, '.menu .container').render();
+			})
+		});
 
-	new MenuCard(
-		'img/tabs/elite.jpg',
-		'elite',
-		'Меню "elite"',
-		`Меню "elite" - это новый подход к приготовлению блюд: больше свежих
-				овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной
-				ценой и высоким качеством!`,
-		12,
-		'.menu .container',
-		'menu__item'
-	).renred();
+	// альтернативный способ добавления карточки
+	/* getResource('http://localhost:3000/menu')
+		.then(data => createData(data));
 
-	new MenuCard(
-		'img/tabs/post.jpg',
-		'vegy',
-		'Меню "post"',
-		`Меню "post" - это новый подход к приготовлению блюд: больше свежих
-				овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной
-				ценой и высоким качеством!`,
-		5,
-		'.menu .container',
-		'menu__item'
-	).renred();
+	function createData(data) {
+		data.forEach(({ img, altimg, title, descr, price }) => {
+			const element = document.createElement('div');
+
+			element.classList.add('menu__item');
+
+			element.innerHTML = `
+			<img src=${img} alt=${altimg}>
+				<h3 class="menu__item-subtitle">${title}</h3>
+				<div class="menu__item-descr">${descr}</div>
+				<div class="menu__item-divider"></div>
+				<div class="menu__item-price">
+						<div class="menu__item-cost">Цена:</div>
+						<div class="menu__item-total"><span>${price}</span> грн/день</div>
+				</div>
+			`;
+			document.querySelector('.menu .container').append(element);
+		});
+	} */
+
+
+
+
+
 
 	//Forms
 	const forms = document.querySelectorAll('form')
@@ -232,10 +231,27 @@ document.addEventListener('DOMContentLoaded', () => {
 		failure: 'Что-то пошло не так...'
 	}
 	forms.forEach(item => {
-		postData(item);
+		bindPostData(item);
 	});
 
-	function postData(form) {
+	const postData = async (url, data) => {
+		let res = await fetch(url, {
+			method: 'POST',
+			headers: { 'Content-type': 'application/json' },
+			body: data
+		});
+		return await res.json();
+	}
+
+	async function getResource(url) {
+		let res = await fetch(url);
+		if (!res.ok) {
+			throw new Error(`Не могу зафечить ${url}, статус: ${res.status}`);
+		}
+		return await res.json();
+	};
+
+	function bindPostData(form) {
 		form.addEventListener('submit', (e) => {
 			e.preventDefault();
 
@@ -249,24 +265,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 			const formData = new FormData(form);
 
-			const object = {};
-			formData.forEach((value, key) => {
-				object[key] = value;
-			});
+			//пояснение смотреть в ud.59
+			const json = JSON.stringify(Object.fromEntries(formData.entries()));
 
-			fetch('server.php', {
-				method: 'POST',
-				headers: { 'Content-type': 'application/json' },
-				body: JSON.stringify(object)
-			}).then(data => data.text()).then(data => {
-				console.log(data);
-				showThanksModal(message.success);
-				statusMessage.remove();
-			}).catch(() => {
-				showThanksModal(message.failure);
-			}).finally(() => {
-				form.reset();
-			})
+			postData('http://localhost:3000/requests', json)
+				.then(data => {
+					console.log(data);
+					showThanksModal(message.success);
+					statusMessage.remove();
+				}).catch(() => {
+					showThanksModal(message.failure);
+				}).finally(() => {
+					form.reset();
+				})
 		});
 	}
 	function showThanksModal(message) {
@@ -290,5 +301,4 @@ document.addEventListener('DOMContentLoaded', () => {
 			closeModal();
 		}, 4000);
 	}
-
 });
