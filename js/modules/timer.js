@@ -1,7 +1,5 @@
-function timer() {
-    //ТАЙМЕР ОБРАТНОГО ОТСЧЕТА
+function timer(id, deadline) {
 
-    const deadline = '2021-06-23';
     //функция которая сравнивает вермя в deadline и текущее время и полчает разницу между датами
     function getTimeRemaining(endtime) {
         const t = Date.parse(endtime) - Date.parse(new Date()),
@@ -52,9 +50,9 @@ function timer() {
         }
     }
 
-    setClock('.timer', deadline);
+    setClock(id, deadline);
 
 
 }
 
-module.exports = timer;
+export default timer;

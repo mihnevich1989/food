@@ -1,3 +1,4 @@
+import { getResource } from '../services/services';
 function cards() {
     //Реализация динамических карточек на страницу через шаблонизацию КЛАССЫ конструкторы
 
@@ -39,13 +40,6 @@ function cards() {
         }
     }
 
-    async function getResource(url) {
-        let res = await fetch(url);
-        if (!res.ok) {
-            throw new Error(`Не могу зафечить ${url}, статус: ${res.status}`);
-        }
-        return await res.json();
-    }
 
     getResource('http://localhost:3000/menu')
         .then(data => {
@@ -85,4 +79,4 @@ function cards() {
     } */
 
 }
-module.exports = cards;
+export default cards;
